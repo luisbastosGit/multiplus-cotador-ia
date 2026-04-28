@@ -4,8 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 
-# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 20:32
+# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 20:37
 from inteligencia.extrator_ia import processar_pdf_gemini
+from drivers_seguradoras import porto_seguro
 
 # Inicialização da API
 app = FastAPI(title="Motor Multiplus - Multicálculo API")
@@ -40,7 +41,6 @@ async def extrair_apolice(arquivo_pdf: UploadFile = File(...)):
     try:
         conteudo = await arquivo_pdf.read()
         
-        # NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 20:32
         dados_extraidos = processar_pdf_gemini(conteudo)
         
         return {
@@ -57,11 +57,16 @@ async def iniciar_cotacao(dados: DadosCotacao):
     Rota que recebe os dados limpos e aciona os robôs (Playwright).
     """
     try:
-        print(f"Iniciando cotação para: {dados.nome} | Placa: {dados.placa}")
+        print(f"Iniciando cotação recebida da origem: {dados.origem}")
+        
+        # NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 20:37
+        # Aciona o robô da Porto Seguro passando o objeto de dados padronizado
+        resultado_porto = porto_seguro.cotar(dados)
         
         return {
             "status": "sucesso",
-            "mensagem": "Dados injetados na fila de processamento da seguradora."
+            "mensagem": "Automação finalizada nas seguradoras.",
+            "detalhes": [resultado_porto]
         }
     except Exception as e:
         return {"status": "erro", "mensagem": str(e)}
