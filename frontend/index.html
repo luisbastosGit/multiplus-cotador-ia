@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplus Seguros - Multicálculo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="wizard-container">
+        <div id="stepChoice">
+            <h3>Como deseja iniciar sua cotação?</h3>
+            <p class="subtitle">Escolha o formato que preferir para enviarmos os dados à seguradora.</p>
+            <div class="selection-grid">
+                <div class="choice-card" onclick="showManual()">
+                    <div class="icon">📝</div>
+                    <h4>Digitação Manual</h4>
+                    <p>Preencha os dados do veículo e perfil passo a passo.</p>
+                </div>
+                <div class="choice-card highlight" onclick="showUpload()">
+                    <div class="badge-fast">Mais Seguro</div>
+                    <div class="icon">📄</div>
+                    <h4>Upload de PDF</h4>
+                    <p>Anexe sua apólice atual. Nossa IA extrai tudo sem erros.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="stepUpload" class="upload-area" style="display: none;">
+            <h3>Anexar Apólice (PDF)</h3>
+            <div class="drop-zone" onclick="document.getElementById('pdfInput').click()">
+                <div class="icon-upload">📥</div>
+                <p id="uploadText">Clique para selecionar o PDF da apólice</p>
+                <div id="fileName" class="file-info"></div>
+                <input type="file" id="pdfInput" accept="application/pdf" style="display:none" onchange="handleFile(this)">
+            </div>
+            <div class="btn-container between">
+                <button type="button" class="btn-prev" onclick="resetToChoice()">Voltar</button>
+                <button type="button" id="btnSendPdf" class="btn-next" style="display:none;" onclick="sendPdf()">Iniciar Análise por IA</button>
+            </div>
+        </div>
+
+        <form id="formManual" style="display: none;">
+            <ul class="progress-bar">
+                <li class="active" id="ind-1">Segurado</li>
+                <li id="ind-2">Veículo</li>
+                <li id="ind-3">Perfil</li>
+                <li id="ind-4">Pacote</li>
+            </ul>
+            <div id="stepsContainer"></div> 
+            <div class="success-screen" id="telaSucesso">
+                <div class="check-icon">✓</div>
+                <h3>Pedido Recebido!</h3>
+                <p>Nossa IA e os robôs das seguradoras já estão trabalhando.</p>
+            </div>
+        </form>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
