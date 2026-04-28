@@ -1,22 +1,25 @@
 import os
-from fastapi import FastAPI, UploadFile, File, Request
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 
+# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 20:32
+from inteligencia.extrator_ia import processar_pdf_gemini
+
 # Inicialização da API
 app = FastAPI(title="Motor Multiplus - Multicálculo API")
 
-# Liberação do CORS (Isso impede que o navegador bloqueie a comunicação com o Wix)
+# Liberação do CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Em produção, colocaremos o domínio do seu frontend aqui
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Modelo de Dados Padronizado (Injeção de Dependência)
+# Modelo de Dados Padronizado
 class DadosCotacao(BaseModel):
     origem: str
     nome: str
@@ -32,17 +35,18 @@ def health_check():
 @app.post("/extrair-apolice")
 async def extrair_apolice(arquivo_pdf: UploadFile = File(...)):
     """
-    Rota que receberá o PDF do Wix.
-    Aqui integraremos o Gemini futuramente para extrair os dados.
+    Rota que recebe o PDF do Wix e repassa para o módulo Gemini.
     """
     try:
         conteudo = await arquivo_pdf.read()
-        tamanho_mb = len(conteudo) / (1024 * 1024)
         
-        # Simulação de resposta de sucesso para o Frontend
+        # NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 20:32
+        dados_extraidos = processar_pdf_gemini(conteudo)
+        
         return {
             "status": "sucesso",
-            "mensagem": f"Arquivo {arquivo_pdf.filename} recebido ({tamanho_mb:.2f} MB). Fila de IA iniciada."
+            "mensagem": f"Arquivo {arquivo_pdf.filename} processado pela IA.",
+            "dados": dados_extraidos
         }
     except Exception as e:
         return {"status": "erro", "mensagem": str(e)}
@@ -50,13 +54,9 @@ async def extrair_apolice(arquivo_pdf: UploadFile = File(...)):
 @app.post("/iniciar-cotacao")
 async def iniciar_cotacao(dados: DadosCotacao):
     """
-    Rota que recebe os dados limpos (do form manual ou da IA)
-    e aciona os robôs (Playwright) das seguradoras.
+    Rota que recebe os dados limpos e aciona os robôs (Playwright).
     """
     try:
-        # Aqui chamaremos o driver da Porto Seguro, ex: 
-        # resultado = porto_seguro.executar_cotacao(dados)
-        
         print(f"Iniciando cotação para: {dados.nome} | Placa: {dados.placa}")
         
         return {
@@ -67,6 +67,5 @@ async def iniciar_cotacao(dados: DadosCotacao):
         return {"status": "erro", "mensagem": str(e)}
 
 if __name__ == "__main__":
-    # O Render exige que a porta seja definida por variável de ambiente
     porta = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=porta)
