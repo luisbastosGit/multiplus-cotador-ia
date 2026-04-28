@@ -1,0 +1,44 @@
+const API_URL = "https://SEU-BACKEND.onrender.com";
+
+function showManual() {
+    document.getElementById('stepChoice').style.display = 'none';
+    document.getElementById('formManual').style.display = 'block';
+    // Lógica para renderizar os campos do wizard
+}
+
+function showUpload() {
+    document.getElementById('stepChoice').style.display = 'none';
+    document.getElementById('stepUpload').style.display = 'block';
+}
+
+function resetToChoice() {
+    document.getElementById('stepUpload').style.display = 'none';
+    document.getElementById('stepChoice').style.display = 'block';
+}
+
+function handleFile(input) {
+    const file = input.files[0];
+    if (file && file.type === "application/pdf") {
+        document.getElementById('fileName').innerText = "Selecionado: " + file.name;
+        document.getElementById('btnSendPdf').style.display = 'block';
+    } else {
+        alert("Por favor, selecione um arquivo PDF válido.");
+    }
+}
+
+async function sendPdf() {
+    const fileInput = document.getElementById('pdfInput');
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    try {
+        const response = await fetch(`${API_URL}/upload-apolice`, {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+        alert("IA processando os dados: " + result.status);
+    } catch (error) {
+        console.error("Erro no envio:", error);
+    }
+}
