@@ -64,7 +64,7 @@
                     <div class="input-group"><label>E-mail *</label><input type="email" id="email" required></div>
                     <div class="input-group"><label>Confirme E-mail *</label><input type="email" id="emailConfirm" required></div>
                     <div class="input-group"><label>Sexo *</label><select id="sexo" required><option value="">Selecione...</option><option value="M">Masculino</option><option value="F">Feminino</option></select></div>
-                    <div class="input-group"><label>Estado Civil *</label><select id="estadoCivil" required><option value="">Selecione...</option><option value="solteiro">Solteiro</option><option value="casado">Casado</option></select></div>
+                    <div class="input-group"><label>Estado Civil *</label><select id="estadoCivil" required><option value="">Selecione...</option><option value="solteiro">Solteiro</option><option value="casado">Casado</option><option value="divorciado">Divorciado</option><option value="viuvo">Viúvo</option></select></div>
                     <div class="input-group full-width"><label>CEP Residencial *</label><input type="text" id="cepResidencial" required></div>
                 </div>
                 <div class="btn-container right"><button type="button" class="btn-next" onclick="avancarPasso(2)">Avançar &#8594;</button></div>
@@ -78,7 +78,7 @@
                     <div class="input-group full-width"><label>Modelo Exato *</label><input type="text" id="modelo" required></div>
                     <div class="input-group"><label>Ano Fab. *</label><input type="number" id="anoFab" required></div>
                     <div class="input-group"><label>Ano Mod. *</label><input type="number" id="anoMod" required></div>
-                    <div class="input-group full-width"><label>Combustível *</label><select id="combustivel" required><option value="">Selecione...</option><option value="flex">Flex</option><option value="gasolina">Gasolina</option></select></div>
+                    <div class="input-group full-width"><label>Combustível *</label><select id="combustivel" required><option value="">Selecione...</option><option value="flex">Flex</option><option value="gasolina">Gasolina</option><option value="diesel">Diesel</option><option value="eletrico">Elétrico</option></select></div>
                 </div>
                 <div class="btn-container between"><button type="button" class="btn-prev" onclick="voltarPasso(1)">Voltar</button><button type="button" class="btn-next" onclick="avancarPasso(3)">Avançar</button></div>
             </div>
@@ -87,11 +87,11 @@
                 <h3>Perfil e Uso</h3>
                 <div class="form-grid">
                     <div class="input-group"><label>CEP Pernoite *</label><input type="text" id="cepPernoite" required></div>
-                    <div class="input-group"><label>Residência *</label><select id="tipoResidencia" required><option value="casa">Casa</option><option value="apartamento">Apto</option></select></div>
-                    <div class="input-group full-width"><label>Garagem? *</label><select id="garagem" required><option value="residencia">Sim, em casa</option><option value="nenhuma">Não possui</option></select></div>
-                    <div class="input-group full-width"><label>Uso *</label><select id="tipoUso" required><option value="particular">Particular</option><option value="aplicativo">Uber/99</option></select></div>
+                    <div class="input-group"><label>Residência *</label><select id="tipoResidencia" required><option value="casa">Casa</option><option value="apartamento">Apto</option><option value="condominio">Casa em Condomínio</option></select></div>
+                    <div class="input-group full-width"><label>Garagem? *</label><select id="garagem" required><option value="residencia">Sim, apenas residência</option><option value="ambos">Sim, residência e trabalho</option><option value="nenhuma">Não possui</option></select></div>
+                    <div class="input-group full-width"><label>Uso *</label><select id="tipoUso" required><option value="particular">Particular</option><option value="aplicativo">Uber/99</option><option value="comercial">Comercial</option></select></div>
                     <div class="input-group"><label>Condutor 17-25? *</label><select id="jovemCondutor" required><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-                    <div class="input-group"><label>KM Mensal *</label><select id="kmMensal" required><option value="500">Até 500km</option><option value="1000">Até 1000km</option></select></div>
+                    <div class="input-group"><label>KM Mensal *</label><select id="kmMensal" required><option value="500">Até 500km</option><option value="1000">Até 1000km</option><option value="ilimitado">Mais de 1000km</option></select></div>
                 </div>
                 <div class="btn-container between"><button type="button" class="btn-prev" onclick="voltarPasso(2)">Voltar</button><button type="button" class="btn-next" onclick="avancarPasso(4)">Avançar</button></div>
             </div>
@@ -103,10 +103,18 @@
                         <h4>Apenas Veículo</h4>
                         <p>Roubo e colisão. Sem guincho.</p>
                     </div>
+                    <div class="card-pacote" onclick="selecionarPacote('basico', this)">
+                        <h4>Pacote Básico</h4>
+                        <p>Roubo/Colisão + Guincho 200km.</p>
+                    </div>
                     <div class="card-pacote recomendado" onclick="selecionarPacote('intermediario', this)">
                         <div class="badge-fast">Mais Vendido</div>
                         <h4>Intermediário</h4>
                         <p>Colisão + Guincho 500km.</p>
+                    </div>
+                    <div class="card-pacote" onclick="selecionarPacote('completo', this)">
+                        <h4>Pacote Completo</h4>
+                        <p>Cobertura total + Guincho Ilimitado.</p>
                     </div>
                 </div>
                 <input type="hidden" id="pacoteSelecionado" required>
