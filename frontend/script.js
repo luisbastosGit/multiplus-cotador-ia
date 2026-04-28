@@ -1,4 +1,4 @@
-const URL_BACKEND = "httpsmultiplus-cotador-ia.onrender.com"; 
+const URL_BACKEND = "COLE_A_URL_DO_SEU_BACKEND_AQUI"; 
 
 // --- CONTROLE DA TELA DE ESCOLHA E UPLOAD ---
 function showManual() {
