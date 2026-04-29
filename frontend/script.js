@@ -1,7 +1,6 @@
-// NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:01
+// NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:20
 const URL_BACKEND = "https://multiplus-cotador-ia.onrender.com"; 
 
-// --- CONTROLE DA TELA DE ESCOLHA E UPLOAD ---
 function showManual() {
   document.getElementById('stepChoice').style.display = 'none';
   document.getElementById('formManual').style.display = 'block';
@@ -31,7 +30,6 @@ function handleFile(input) {
   }
 }
 
-// Envio do PDF para a IA (Backend Python)
 async function sendPdf() {
   const fileInput = document.getElementById('pdfInput');
   if (!fileInput.files[0]) return;
@@ -54,7 +52,19 @@ async function sendPdf() {
     if(response.ok) {
         document.getElementById('stepUpload').style.display = 'none';
         document.getElementById('telaSucesso').style.display = 'block';
-        console.log("Resposta do Servidor:", resultado);
+        
+        // NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:20
+        // Injeta os dados capturados pela IA no HTML
+        if(resultado.dados) {
+            document.getElementById('dadosExtraidos').style.display = 'block';
+            document.getElementById('msgSucesso').innerText = "Análise da IA concluída com sucesso!";
+            document.getElementById('resNome').innerText = resultado.dados.nome || "Não encontrado";
+            document.getElementById('resCpf').innerText = resultado.dados.cpf || "Não encontrado";
+            document.getElementById('resPlaca').innerText = resultado.dados.placa || "Não encontrado";
+            document.getElementById('resEmail').innerText = resultado.dados.email || "Não encontrado";
+            document.getElementById('resPacote').innerText = resultado.dados.pacote || "Não encontrado";
+        }
+        
     } else {
         throw new Error('Falha no servidor');
     }
@@ -66,7 +76,6 @@ async function sendPdf() {
   }
 }
 
-// --- CONTROLE DO WIZARD MANUAL ---
 function avancarPasso(p) {
   document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
   document.getElementById('step-' + p).classList.add('active');
@@ -85,7 +94,6 @@ function selecionarPacote(pac, el) {
   document.getElementById('pacoteSelecionado').value = pac;
 }
 
-// Envio dos dados manuais para o Backend Python
 async function enviarCotacaoManual() {
   if(!document.getElementById('pacoteSelecionado').value) { 
     alert("Por favor, selecione um pacote de cobertura."); 
@@ -116,6 +124,9 @@ async function enviarCotacaoManual() {
         document.querySelectorAll('.wizard-step').forEach(s => s.style.display = 'none');
         document.querySelector('.progress-bar').style.display = 'none';
         document.getElementById('telaSucesso').style.display = 'block';
+        // Garante que a caixa da IA não apareça no envio manual
+        document.getElementById('dadosExtraidos').style.display = 'none';
+        document.getElementById('msgSucesso').innerText = "Nossa IA está processando seus dados na seguradora.";
     } else {
         throw new Error('Falha no servidor');
     }
