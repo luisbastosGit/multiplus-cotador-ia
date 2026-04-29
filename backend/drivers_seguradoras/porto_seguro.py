@@ -1,4 +1,4 @@
-# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026 11:26
+# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026 18:20
 import os
 import time
 from playwright.sync_api import sync_playwright
@@ -14,7 +14,6 @@ class RoboPortoSeguro:
     def executar_cotacao(self, dados):
         print(f"[Porto Seguro] Iniciando robô para: {dados.nome}")
         
-        # O try/except agora engloba a própria inicialização do navegador
         try:
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
@@ -23,23 +22,32 @@ class RoboPortoSeguro:
                 )
                 page = context.new_page()
                 
-                # LOGIN
-                page.goto(self.url_base, wait_until="networkidle")
+                # LOGIN - Alterado para domcontentloaded e timeout de 60s
+                print("[Porto Seguro] Acessando portal...")
+                page.goto(self.url_base, wait_until="domcontentloaded", timeout=60000)
+                
+                # Aguarda o botão principal e clica
+                page.wait_for_selector("text=ACESSAR O CORRETOR ONLINE", timeout=30000)
                 page.click("text=ACESSAR O CORRETOR ONLINE")
                 
-                page.wait_for_selector("input[type='text']", timeout=10000)
+                print("[Porto Seguro] Preenchendo credenciais...")
+                page.wait_for_selector("input[type='text']", timeout=30000)
                 page.fill("input[placeholder*='CPF']", self.cpf_login or "")
                 page.fill("input[type='password']", self.senha_login or "")
                 page.click("button:has-text('ENTRAR')")
                 
                 # SUSEP
-                page.wait_for_selector("input[placeholder*='SUSEP']", timeout=10000)
+                print("[Porto Seguro] Inserindo SUSEP...")
+                page.wait_for_selector("input[placeholder*='SUSEP']", timeout=30000)
                 page.fill("input[placeholder*='SUSEP']", self.susep)
                 page.click("button:has-text('ENTRAR')")
                 
-                # NAVEGAÇÃO E INJEÇÃO
-                page.goto(self.url_cotacao, wait_until="networkidle")
-                page.wait_for_selector("input#cpf_segurado", timeout=15000)
+                # NAVEGAÇÃO E INJEÇÃO - Alterado para domcontentloaded
+                print("[Porto Seguro] Redirecionando para Cotação Auto...")
+                page.goto(self.url_cotacao, wait_until="domcontentloaded", timeout=60000)
+                
+                print("[Porto Seguro] Injetando CPF e Placa...")
+                page.wait_for_selector("input#cpf_segurado", timeout=30000)
                 page.fill("input#cpf_segurado", dados.cpf)
                 page.press("input#cpf_segurado", "Tab")
                 time.sleep(3)
@@ -57,11 +65,12 @@ class RoboPortoSeguro:
                 
         except Exception as e:
             msg_erro = str(e)
-            print(f"[Porto Seguro] Erro bloqueado pelo sistema de proteção: {msg_erro}")
+            print(f"[Porto Seguro] Erro capturado no fluxo: {msg_erro}")
             
-            # Tratamento amigável para o erro do Render
             if "Executable doesn't exist" in msg_erro:
-                return {"status": "Navegador não instalado no Render. IA operante."}
+                return {"status": "Erro: Navegador Ausente."}
+            elif "Timeout" in msg_erro:
+                return {"status": "Erro: O site da Porto Seguro demorou muito para responder."}
                 
             return {"status": f"Falha de Automação: {msg_erro[:40]}"}
 
