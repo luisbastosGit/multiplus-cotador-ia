@@ -1,61 +1,68 @@
-# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 20:32
+# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:12
 import os
 import json
+import tempfile
 import google.generativeai as genai
 
 def processar_pdf_gemini(conteudo_pdf: bytes) -> dict:
     """
-    Módulo responsável por receber os bytes do PDF, enviar ao Gemini
-    e retornar o objeto padronizado de cotação.
+    Módulo que utiliza o Gemini 1.5 Pro para ler apólices em PDF
+    e devolver os dados estruturados para o robô da Porto Seguro.
     """
     api_key = os.environ.get("GEMINI_API_KEY")
     
     if not api_key:
-        # Retorno de fallback temporário para testes no Render
-        # enquanto a chave API real não é configurada no painel
-        return {
-            "origem": "ia_simulacao",
-            "nome": "Chave API Não Configurada",
-            "cpf": "00000000000",
-            "placa": "AAA0000",
-            "email": "pendente@ia.com",
-            "pacote": "intermediario"
-        }
+        raise ValueError("ERRO: Variável GEMINI_API_KEY não encontrada no Render.")
+
+    genai.configure(api_key=api_key)
+
+    # 1. Cria um arquivo temporário no servidor para o Gemini poder ler
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        tmp.write(conteudo_pdf)
+        caminho_tmp = tmp.name
 
     try:
-        genai.configure(api_key=api_key)
-        
-        # Configuração do modelo focado em extração JSON
+        # 2. Faz o upload do documento para a infraestrutura do Google
+        arquivo_gemini = genai.upload_file(path=caminho_tmp, mime_type="application/pdf")
+
+        # 3. Configura o modelo para extração estrita de JSON
         model = genai.GenerativeModel(
             model_name="gemini-1.5-pro",
             generation_config={"response_mime_type": "application/json"}
         )
-        
+
         prompt = """
-        Você é um assistente especialista na leitura de apólices e propostas de seguro auto.
-        Analise o documento e extraia estritamente os seguintes dados no formato JSON abaixo:
+        Analise esta apólice ou proposta de seguro automóvel e extraia os dados abaixo.
+        Retorne estritamente um JSON com esta estrutura:
         {
             "origem": "ia",
-            "nome": "Nome completo do segurado principal",
-            "cpf": "Apenas os números do CPF",
-            "placa": "Placa do veículo",
-            "email": "E-mail do segurado, se houver",
-            "pacote": "Analise as coberturas. Retorne 'basico' se guincho até 200km, 'intermediario' se guincho até 500km, 'completo' se guincho ilimitado. Retorne 'apenas_veiculo' se não houver guincho."
+            "nome": "NOME COMPLETO DO SEGURADO",
+            "cpf": "APENAS NUMEROS DO CPF",
+            "placa": "PLACA DO VEICULO",
+            "email": "EMAIL DO SEGURADO SE DISPONIVEL",
+            "pacote": "Deduza: 'basico' (guincho até 200km), 'intermediario' (guincho 500km), 'completo' (ilimitado) ou 'apenas_veiculo' (sem guincho)."
         }
         """
+
+        # 4. Gera a extração
+        resposta = model.generate_content([prompt, arquivo_gemini])
         
-        # Nota estrutural: Em produção com a chave ativa, utilizaremos 
-        # a File API do Google para anexar os bytes do PDF.
-        # Para evitar bloqueios de compilação agora, manteremos o esqueleto preparado.
-        
-        return {
-            "origem": "ia_simulacao",
-            "nome": "Integração IA Estruturada",
-            "cpf": "00000000000",
-            "placa": "AAA0000",
-            "email": "pendente@ia.com",
-            "pacote": "intermediario"
-        }
+        # Converte a string de texto da IA para um dicionário Python
+        dados_finais = json.loads(resposta.text)
+        return dados_finais
 
     except Exception as e:
-        raise RuntimeError(f"Falha no processamento do Gemini: {str(e)}")
+        print(f"Erro crítico no Extrator IA: {str(e)}")
+        return {
+            "origem": "erro_ia",
+            "nome": "Erro na leitura do PDF",
+            "cpf": "00000000000",
+            "placa": "ERRO000",
+            "email": "",
+            "pacote": "intermediario"
+        }
+    
+    finally:
+        # Limpeza obrigatória do arquivo temporário para não encher o disco do Render
+        if os.path.exists(caminho_tmp):
+            os.remove(caminho_tmp)
