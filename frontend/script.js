@@ -1,4 +1,5 @@
-const URL_BACKEND = "https://multiplus-interface.onrender.com/"; 
+// NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:01
+const URL_BACKEND = "https://multiplus-cotador-ia.onrender.com"; 
 
 // --- CONTROLE DA TELA DE ESCOLHA E UPLOAD ---
 function showManual() {
@@ -48,9 +49,12 @@ async function sendPdf() {
       body: formData
     });
     
+    const resultado = await response.json();
+    
     if(response.ok) {
         document.getElementById('stepUpload').style.display = 'none';
         document.getElementById('telaSucesso').style.display = 'block';
+        console.log("Resposta do Servidor:", resultado);
     } else {
         throw new Error('Falha no servidor');
     }
