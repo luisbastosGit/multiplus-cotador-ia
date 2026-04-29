@@ -1,5 +1,5 @@
 // NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:20
-const URL_BACKEND = "https://multiplus-cotador-ia.onrender.com"; 
+const URL_BACKEND = "https://motor-multiplus-docker.onrender.com"; 
 
 function showManual() {
   document.getElementById('stepChoice').style.display = 'none';
