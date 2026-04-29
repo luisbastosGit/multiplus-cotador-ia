@@ -124,10 +124,19 @@
                 </div>
             </div>
 
-            <div class="success-screen" id="telaSucesso" style="display:none;">
+            <div class="success-screen" id="telaSucesso" style="display:none; text-align: center;">
                 <div class="check-icon" style="font-size:40px; color:#28a745;">✓</div>
                 <h3>Recebido!</h3>
-                <p>Nossa IA está processando seus dados na seguradora.</p>
+                <p id="msgSucesso">Nossa IA está processando seus dados na seguradora.</p>
+                
+                <div id="dadosExtraidos" class="result-box">
+                    <h4>Dados Capturados da Apólice:</h4>
+                    <p class="result-item"><strong>Nome:</strong> <span id="resNome">-</span></p>
+                    <p class="result-item"><strong>CPF:</strong> <span id="resCpf">-</span></p>
+                    <p class="result-item"><strong>Placa:</strong> <span id="resPlaca">-</span></p>
+                    <p class="result-item"><strong>E-mail:</strong> <span id="resEmail">-</span></p>
+                    <p class="result-item"><strong>Pacote IA:</strong> <span id="resPacote">-</span></p>
+                </div>
             </div>
         </form>
     </div>
