@@ -1,4 +1,4 @@
-# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026 19:06
+# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026
 import os
 import time
 from playwright.sync_api import sync_playwright
@@ -24,17 +24,16 @@ class RoboPortoSeguro:
                 
                 print("[Porto Seguro] Acessando portal...")
                 page.goto(self.url_base, wait_until="domcontentloaded", timeout=60000)
-                time.sleep(5)
+                time.sleep(5) # Aguarda o carregamento pesado da Porto
                 
                 print("[Porto Seguro] Tentando clicar no botão de acesso...")
                 botoes_acesso = page.locator("text=ACESSAR O CORRETOR ONLINE")
                 if botoes_acesso.count() > 0:
                     botoes_acesso.first.click(force=True)
                 else:
-                    raise Exception("Botão de acesso não encontrado na página.")
+                    raise Exception("Botão de acesso inicial não encontrado.")
                 
                 print("[Porto Seguro] Preenchendo credenciais...")
-                # CORREÇÃO: Filtramos para pegar APENAS os campos visíveis, ignorando o "Recuperar Senha" oculto
                 cpf_input = page.locator("input[name='logon'], input[placeholder*='CPF']").locator("visible=true").first
                 cpf_input.wait_for(timeout=30000)
                 cpf_input.fill(self.cpf_login or "")
@@ -42,19 +41,30 @@ class RoboPortoSeguro:
                 senha_input = page.locator("input[type='password']").locator("visible=true").first
                 senha_input.fill(self.senha_login or "")
                 
-                btn_entrar = page.locator("button:has-text('ENTRAR')").locator("visible=true").first
-                btn_entrar.click()
+                # TRUQUE DE MESTRE: Pressiona Enter dentro do campo de senha
+                senha_input.press("Enter")
+                time.sleep(3)
                 
-                # SUSEP
+                # Backup: Clica no elemento que contém "ENTRAR" (seja ele qual for)
+                btn_entrar = page.locator("text='ENTRAR'").locator("visible=true")
+                if btn_entrar.count() > 0:
+                    btn_entrar.first.click(force=True)
+                
+                # SUSEP (Apoiado pela imagem que você mandou)
                 print("[Porto Seguro] Inserindo SUSEP...")
                 susep_input = page.locator("input[placeholder*='SUSEP']").locator("visible=true").first
                 susep_input.wait_for(timeout=30000)
                 susep_input.fill(self.susep)
                 
-                btn_susep = page.locator("button:has-text('ENTRAR')").locator("visible=true").first
-                btn_susep.click()
+                # Novamente, simula o Enter
+                susep_input.press("Enter")
+                time.sleep(3)
                 
-                # NAVEGAÇÃO E INJEÇÃO
+                btn_susep = page.locator("text='ENTRAR'").locator("visible=true")
+                if btn_susep.count() > 0:
+                    btn_susep.first.click(force=True)
+                
+                # NAVEGAÇÃO E INJEÇÃO FINAL
                 print("[Porto Seguro] Redirecionando para Cotação Auto...")
                 page.goto(self.url_cotacao, wait_until="domcontentloaded", timeout=60000)
                 
@@ -75,7 +85,7 @@ class RoboPortoSeguro:
                     pass
                     
                 browser.close()
-                return {"status": "Injeção Concluída no Portal."}
+                return {"status": "Sucesso! Dados injetados na Porto Seguro."}
                 
         except Exception as e:
             msg_erro = str(e)
@@ -84,7 +94,7 @@ class RoboPortoSeguro:
             if "Executable doesn't exist" in msg_erro:
                 return {"status": "Erro: Navegador Ausente."}
             elif "Timeout" in msg_erro:
-                return {"status": "Aviso: O site da Porto Seguro demorou muito e o robô foi abortado."}
+                return {"status": "Aviso: O site demorou muito a responder e o robô abortou."}
                 
             return {"status": f"Falha de Automação: {msg_erro[:40]}"}
 
