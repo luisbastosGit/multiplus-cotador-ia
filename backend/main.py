@@ -1,4 +1,4 @@
-# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 23:00
+# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026 11:26
 import os
 import uvicorn
 from fastapi import FastAPI, UploadFile, File, HTTPException
@@ -31,33 +31,33 @@ def health_check():
 
 @app.post("/extrair-apolice")
 def extrair_apolice(arquivo_pdf: UploadFile = File(...)):
-    """
-    Lê o PDF, extrai via IA e aciona o robô.
-    Usamos 'def' puro para evitar conflitos de loop com o Playwright Sync.
-    """
     try:
-        # Leitura síncrona para evitar problemas de concorrência
         conteudo = arquivo_pdf.file.read()
         
-        # 1. Extração pela IA (Gemini)
+        # 1. A Extração pela IA sempre ocorre primeiro
         dados_extraidos = processar_pdf_gemini(conteudo)
         
-        # 2. Inicialização do status do robô
-        resultado_automacao = {"status": "IA falhou ou dados insuficientes"}
+        resultado_automacao = {"status": "Aguardando Inicialização do Robô"}
         
-        # 3. Disparo do Robô se a IA teve sucesso
+        # 2. Proteção Absoluta: Tenta rodar o robô. Se falhar, não derruba a IA.
         if dados_extraidos.get("origem") == "ia":
             objeto_dados = DadosCotacao(**dados_extraidos)
-            resultado_automacao = porto_seguro.cotar(objeto_dados)
+            try:
+                resultado_automacao = porto_seguro.cotar(objeto_dados)
+            except Exception as erro_robo:
+                print(f"Falha isolada no robô: {str(erro_robo)}")
+                resultado_automacao = {"status": "Erro no servidor do robô, mas IA concluída."}
         
+        # 3. Retorna os dados da IA com segurança para o Frontend
         return {
             "status": "sucesso",
             "dados": dados_extraidos,
             "automacao": resultado_automacao
         }
+        
     except Exception as e:
-        print(f"Erro Crítico: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Erro Crítico Backend: {str(e)}")
+        raise HTTPException(status_code=500, detail="Falha severa na leitura do documento.")
 
 @app.post("/iniciar-cotacao")
 def iniciar_cotacao(dados: DadosCotacao):
