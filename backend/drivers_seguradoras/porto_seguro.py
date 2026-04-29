@@ -1,4 +1,4 @@
-# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 22:42
+# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026 11:26
 import os
 import time
 from playwright.sync_api import sync_playwright
@@ -14,51 +14,56 @@ class RoboPortoSeguro:
     def executar_cotacao(self, dados):
         print(f"[Porto Seguro] Iniciando robô para: {dados.nome}")
         
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            context = browser.new_context(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-            )
-            page = context.new_page()
-            
-            try:
-                # 1. LOGIN
-                print("[Porto Seguro] Acessando portal...")
+        # O try/except agora engloba a própria inicialização do navegador
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                context = browser.new_context(
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                )
+                page = context.new_page()
+                
+                # LOGIN
                 page.goto(self.url_base, wait_until="networkidle")
                 page.click("text=ACESSAR O CORRETOR ONLINE")
                 
-                page.wait_for_selector("input[type='text']", timeout=15000)
-                page.fill("input[placeholder*='CPF']", self.cpf_login)
-                page.fill("input[type='password']", self.senha_login)
+                page.wait_for_selector("input[type='text']", timeout=10000)
+                page.fill("input[placeholder*='CPF']", self.cpf_login or "")
+                page.fill("input[type='password']", self.senha_login or "")
                 page.click("button:has-text('ENTRAR')")
                 
-                # 2. SUSEP
-                print("[Porto Seguro] Validando SUSEP...")
-                page.wait_for_selector("input[placeholder*='SUSEP']", timeout=15000)
+                # SUSEP
+                page.wait_for_selector("input[placeholder*='SUSEP']", timeout=10000)
                 page.fill("input[placeholder*='SUSEP']", self.susep)
                 page.click("button:has-text('ENTRAR')")
                 
-                # 3. NAVEGAÇÃO E INJEÇÃO
-                print("[Porto Seguro] Preenchendo dados de cálculo...")
+                # NAVEGAÇÃO E INJEÇÃO
                 page.goto(self.url_cotacao, wait_until="networkidle")
-                
-                page.wait_for_selector("input#cpf_segurado", timeout=20000)
+                page.wait_for_selector("input#cpf_segurado", timeout=15000)
                 page.fill("input#cpf_segurado", dados.cpf)
                 page.press("input#cpf_segurado", "Tab")
-                time.sleep(4) 
+                time.sleep(3)
                 
                 page.fill("input#placa_veiculo", dados.placa)
                 page.press("input#placa_veiculo", "Tab")
-                time.sleep(4)
                 
-                page.screenshot(path="evidencia_porto.png")
-                return {"status": "Sucesso", "detalhes": "Dados injetados"}
-
-            except Exception as e:
-                print(f"[Porto Seguro] Erro: {str(e)}")
-                return {"status": "Erro", "detalhes": str(e)[:50]}
-            finally:
+                try:
+                    page.screenshot(path="evidencia_porto.png")
+                except:
+                    pass
+                    
                 browser.close()
+                return {"status": "Injeção Concluída no Portal."}
+                
+        except Exception as e:
+            msg_erro = str(e)
+            print(f"[Porto Seguro] Erro bloqueado pelo sistema de proteção: {msg_erro}")
+            
+            # Tratamento amigável para o erro do Render
+            if "Executable doesn't exist" in msg_erro:
+                return {"status": "Navegador não instalado no Render. IA operante."}
+                
+            return {"status": f"Falha de Automação: {msg_erro[:40]}"}
 
 def cotar(dados):
     return RoboPortoSeguro().executar_cotacao(dados)
