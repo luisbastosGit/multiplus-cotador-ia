@@ -1,14 +1,41 @@
-# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:46
+# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:58
 import os
 import json
 import tempfile
 import time
 import google.generativeai as genai
 
+def buscar_melhor_modelo_disponivel():
+    """
+    Consulta a API do Google para encontrar o melhor modelo disponível
+    que suporte a geração de conteúdo.
+    """
+    try:
+        modelos_disponiveis = genai.list_models()
+        modelos_suportados = [
+            m.name for m in modelos_disponiveis 
+            if 'generateContent' in m.supported_generation_methods
+        ]
+        
+        # Prioridade 1: Qualquer variação do Gemini 1.5 Pro
+        for m in modelos_suportados:
+            if 'gemini-1.5-pro' in m:
+                return m
+        
+        # Prioridade 2: Qualquer variação do Gemini 1.5 Flash
+        for m in modelos_suportados:
+            if 'gemini-1.5-flash' in m:
+                return m
+                
+        # Fallback: O primeiro modelo que suportar a função
+        return modelos_suportados[0] if modelos_suportados else "gemini-1.5-flash"
+    except Exception as e:
+        print(f"Erro ao listar modelos: {e}")
+        return "gemini-1.5-flash"
+
 def processar_pdf_gemini(conteudo_pdf: bytes) -> dict:
     """
-    Módulo que utiliza o Gemini 1.5 Pro para ler apólices em PDF
-    e devolver os dados estruturados para o robô da Porto Seguro.
+    Módulo dinâmico que detecta o modelo disponível e extrai dados do PDF.
     """
     api_key = os.environ.get("GEMINI_API_KEY")
     
@@ -27,32 +54,35 @@ def processar_pdf_gemini(conteudo_pdf: bytes) -> dict:
     arquivo_gemini = None
 
     try:
-        # 1. Cria um arquivo temporário no servidor para o Gemini poder ler
+        # 1. Descoberta dinâmica do modelo
+        modelo_escolhido = buscar_melhor_modelo_disponivel()
+        print(f"Modelo detectado e selecionado: {modelo_escolhido}")
+
+        # 2. Criação do arquivo temporário
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(conteudo_pdf)
             caminho_tmp = tmp.name
 
-        # 2. Faz o upload do documento para a infraestrutura do Google
+        # 3. Upload para o Google
         arquivo_gemini = genai.upload_file(path=caminho_tmp, mime_type="application/pdf")
 
-        # 3. Espera Inteligente (Polling): Aguarda o Google processar o PDF antes de ler
+        # 4. Aguarda processamento (Polling)
         while arquivo_gemini.state.name == "PROCESSING":
-            print("Aguardando processamento do PDF pelo Google...")
             time.sleep(2)
             arquivo_gemini = genai.get_file(arquivo_gemini.name)
             
         if arquivo_gemini.state.name == "FAILED":
-            raise Exception("Os servidores do Google falharam ao processar este PDF.")
+            raise Exception("Falha no processamento do arquivo pelo Google.")
 
-        # 4. Configura o modelo para extração estrita de JSON (Nomenclatura Corrigida)
+        # 5. Configuração do modelo detectado
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-pro-latest",
+            model_name=modelo_escolhido,
             generation_config={"response_mime_type": "application/json"}
         )
 
         prompt = """
         Analise esta apólice ou proposta de seguro automóvel e extraia os dados abaixo.
-        Retorne estritamente um JSON com esta estrutura, sem formatação markdown:
+        Retorne estritamente um JSON com esta estrutura:
         {
             "origem": "ia",
             "nome": "NOME COMPLETO DO SEGURADO",
@@ -63,26 +93,19 @@ def processar_pdf_gemini(conteudo_pdf: bytes) -> dict:
         }
         """
 
-        # 5. Gera a extração
+        # 6. Geração do conteúdo
         resposta = model.generate_content([prompt, arquivo_gemini])
         
-        # 6. Limpeza brutal de qualquer formatação Markdown invisível
+        # 7. Limpeza e parsing do JSON
         texto_limpo = resposta.text.strip()
-        if texto_limpo.startswith("```json"):
-            texto_limpo = texto_limpo[7:]
         if texto_limpo.startswith("```"):
-            texto_limpo = texto_limpo[3:]
-        if texto_limpo.endswith("```"):
-            texto_limpo = texto_limpo[:-3]
-        texto_limpo = texto_limpo.strip()
+            import re
+            texto_limpo = re.sub(r'^```[a-zA-Z]*\n|```$', '', texto_limpo, flags=re.MULTILINE).strip()
 
-        # Converte a string de texto da IA para um dicionário Python
-        dados_finais = json.loads(texto_limpo)
-        return dados_finais
+        return json.loads(texto_limpo)
 
     except Exception as e:
         print(f"Erro crítico no Extrator IA: {str(e)}")
-        # Injeta o erro real da Google no campo 'nome' para debug visual
         return {
             "origem": "erro_ia",
             "nome": f"Erro Técnico: {str(e)[:150]}",
@@ -93,10 +116,8 @@ def processar_pdf_gemini(conteudo_pdf: bytes) -> dict:
         }
     
     finally:
-        # Limpeza obrigatória do arquivo temporário no disco do Render
         if caminho_tmp and os.path.exists(caminho_tmp):
             os.remove(caminho_tmp)
-        # Limpeza do arquivo na nuvem da Google por segurança de dados
         if arquivo_gemini:
             try:
                 genai.delete_file(arquivo_gemini.name)
