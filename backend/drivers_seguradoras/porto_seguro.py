@@ -1,4 +1,4 @@
-# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026 18:20
+# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026
 import os
 import time
 from playwright.sync_api import sync_playwright
@@ -22,13 +22,19 @@ class RoboPortoSeguro:
                 )
                 page = context.new_page()
                 
-                # LOGIN - Alterado para domcontentloaded e timeout de 60s
                 print("[Porto Seguro] Acessando portal...")
                 page.goto(self.url_base, wait_until="domcontentloaded", timeout=60000)
                 
-                # Aguarda o botão principal e clica
-                page.wait_for_selector("text=ACESSAR O CORRETOR ONLINE", timeout=30000)
-                page.click("text=ACESSAR O CORRETOR ONLINE")
+                # Pausa estratégica baseada no tempo real de carregamento do site
+                time.sleep(5)
+                
+                print("[Porto Seguro] Tentando clicar no botão de acesso...")
+                # Localiza os botões e força o clique no primeiro elemento disponível
+                botoes_acesso = page.locator("text=ACESSAR O CORRETOR ONLINE")
+                if botoes_acesso.count() > 0:
+                    botoes_acesso.first.click(force=True)
+                else:
+                    raise Exception("Botão de acesso não encontrado na página.")
                 
                 print("[Porto Seguro] Preenchendo credenciais...")
                 page.wait_for_selector("input[type='text']", timeout=30000)
@@ -42,7 +48,7 @@ class RoboPortoSeguro:
                 page.fill("input[placeholder*='SUSEP']", self.susep)
                 page.click("button:has-text('ENTRAR')")
                 
-                # NAVEGAÇÃO E INJEÇÃO - Alterado para domcontentloaded
+                # NAVEGAÇÃO E INJEÇÃO
                 print("[Porto Seguro] Redirecionando para Cotação Auto...")
                 page.goto(self.url_cotacao, wait_until="domcontentloaded", timeout=60000)
                 
@@ -50,7 +56,7 @@ class RoboPortoSeguro:
                 page.wait_for_selector("input#cpf_segurado", timeout=30000)
                 page.fill("input#cpf_segurado", dados.cpf)
                 page.press("input#cpf_segurado", "Tab")
-                time.sleep(3)
+                time.sleep(4)
                 
                 page.fill("input#placa_veiculo", dados.placa)
                 page.press("input#placa_veiculo", "Tab")
@@ -70,7 +76,7 @@ class RoboPortoSeguro:
             if "Executable doesn't exist" in msg_erro:
                 return {"status": "Erro: Navegador Ausente."}
             elif "Timeout" in msg_erro:
-                return {"status": "Erro: O site da Porto Seguro demorou muito para responder."}
+                return {"status": "Erro: Tempo limite excedido no portal da seguradora."}
                 
             return {"status": f"Falha de Automação: {msg_erro[:40]}"}
 
