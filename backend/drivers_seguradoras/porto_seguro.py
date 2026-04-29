@@ -1,4 +1,4 @@
-# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026
+# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026 19:06
 import os
 import time
 from playwright.sync_api import sync_playwright
@@ -24,12 +24,9 @@ class RoboPortoSeguro:
                 
                 print("[Porto Seguro] Acessando portal...")
                 page.goto(self.url_base, wait_until="domcontentloaded", timeout=60000)
-                
-                # Pausa estratégica baseada no tempo real de carregamento do site
                 time.sleep(5)
                 
                 print("[Porto Seguro] Tentando clicar no botão de acesso...")
-                # Localiza os botões e força o clique no primeiro elemento disponível
                 botoes_acesso = page.locator("text=ACESSAR O CORRETOR ONLINE")
                 if botoes_acesso.count() > 0:
                     botoes_acesso.first.click(force=True)
@@ -37,29 +34,40 @@ class RoboPortoSeguro:
                     raise Exception("Botão de acesso não encontrado na página.")
                 
                 print("[Porto Seguro] Preenchendo credenciais...")
-                page.wait_for_selector("input[type='text']", timeout=30000)
-                page.fill("input[placeholder*='CPF']", self.cpf_login or "")
-                page.fill("input[type='password']", self.senha_login or "")
-                page.click("button:has-text('ENTRAR')")
+                # CORREÇÃO: Filtramos para pegar APENAS os campos visíveis, ignorando o "Recuperar Senha" oculto
+                cpf_input = page.locator("input[name='logon'], input[placeholder*='CPF']").locator("visible=true").first
+                cpf_input.wait_for(timeout=30000)
+                cpf_input.fill(self.cpf_login or "")
+                
+                senha_input = page.locator("input[type='password']").locator("visible=true").first
+                senha_input.fill(self.senha_login or "")
+                
+                btn_entrar = page.locator("button:has-text('ENTRAR')").locator("visible=true").first
+                btn_entrar.click()
                 
                 # SUSEP
                 print("[Porto Seguro] Inserindo SUSEP...")
-                page.wait_for_selector("input[placeholder*='SUSEP']", timeout=30000)
-                page.fill("input[placeholder*='SUSEP']", self.susep)
-                page.click("button:has-text('ENTRAR')")
+                susep_input = page.locator("input[placeholder*='SUSEP']").locator("visible=true").first
+                susep_input.wait_for(timeout=30000)
+                susep_input.fill(self.susep)
+                
+                btn_susep = page.locator("button:has-text('ENTRAR')").locator("visible=true").first
+                btn_susep.click()
                 
                 # NAVEGAÇÃO E INJEÇÃO
                 print("[Porto Seguro] Redirecionando para Cotação Auto...")
                 page.goto(self.url_cotacao, wait_until="domcontentloaded", timeout=60000)
                 
                 print("[Porto Seguro] Injetando CPF e Placa...")
-                page.wait_for_selector("input#cpf_segurado", timeout=30000)
-                page.fill("input#cpf_segurado", dados.cpf)
-                page.press("input#cpf_segurado", "Tab")
+                cpf_segurado = page.locator("input#cpf_segurado").locator("visible=true").first
+                cpf_segurado.wait_for(timeout=30000)
+                cpf_segurado.fill(dados.cpf)
+                cpf_segurado.press("Tab")
                 time.sleep(4)
                 
-                page.fill("input#placa_veiculo", dados.placa)
-                page.press("input#placa_veiculo", "Tab")
+                placa_veiculo = page.locator("input#placa_veiculo").locator("visible=true").first
+                placa_veiculo.fill(dados.placa)
+                placa_veiculo.press("Tab")
                 
                 try:
                     page.screenshot(path="evidencia_porto.png")
@@ -76,7 +84,7 @@ class RoboPortoSeguro:
             if "Executable doesn't exist" in msg_erro:
                 return {"status": "Erro: Navegador Ausente."}
             elif "Timeout" in msg_erro:
-                return {"status": "Erro: Tempo limite excedido no portal da seguradora."}
+                return {"status": "Aviso: O site da Porto Seguro demorou muito e o robô foi abortado."}
                 
             return {"status": f"Falha de Automação: {msg_erro[:40]}"}
 
