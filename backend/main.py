@@ -1,4 +1,4 @@
-# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 22:42
+# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 23:00
 import os
 import uvicorn
 from fastapi import FastAPI, UploadFile, File, HTTPException
@@ -32,29 +32,31 @@ def health_check():
 @app.post("/extrair-apolice")
 def extrair_apolice(arquivo_pdf: UploadFile = File(...)):
     """
-    Recebe o PDF, extrai via IA e executa o robô de forma síncrona.
+    Lê o PDF, extrai via IA e aciona o robô.
+    Usamos 'def' puro para evitar conflitos de loop com o Playwright Sync.
     """
     try:
-        # Leitura do conteúdo do arquivo de forma síncrona
+        # Leitura síncrona para evitar problemas de concorrência
         conteudo = arquivo_pdf.file.read()
         
-        # 1. Extração pela IA
+        # 1. Extração pela IA (Gemini)
         dados_extraidos = processar_pdf_gemini(conteudo)
         
-        resultado_robo = {"status": "Não iniciado"}
+        # 2. Inicialização do status do robô
+        resultado_automacao = {"status": "IA falhou ou dados insuficientes"}
         
-        # 2. Execução do Robô
+        # 3. Disparo do Robô se a IA teve sucesso
         if dados_extraidos.get("origem") == "ia":
             objeto_dados = DadosCotacao(**dados_extraidos)
-            resultado_robo = porto_seguro.cotar(objeto_dados)
+            resultado_automacao = porto_seguro.cotar(objeto_dados)
         
         return {
             "status": "sucesso",
             "dados": dados_extraidos,
-            "automacao": resultado_robo
+            "automacao": resultado_automacao
         }
     except Exception as e:
-        print(f"Erro na rota: {str(e)}")
+        print(f"Erro Crítico: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/iniciar-cotacao")
