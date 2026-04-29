@@ -1,7 +1,6 @@
-// NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 23:00
+// NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:28
 const URL_BACKEND = "https://multiplus-cotador-ia.onrender.com"; 
 
-// --- CONTROLE DE NAVEGAÇÃO ---
 function showManual() {
   document.getElementById('stepChoice').style.display = 'none';
   document.getElementById('formManual').style.display = 'block';
@@ -16,23 +15,20 @@ function showUpload() {
 
 function resetToChoice() {
   document.getElementById('stepUpload').style.display = 'none';
-  document.getElementById('formManual').style.display = 'none';
   document.getElementById('stepChoice').style.display = 'block';
-  document.getElementById('telaSucesso').style.display = 'none';
 }
 
-// --- FLUXO DE UPLOAD E INTELIGÊNCIA ARTIFICIAL ---
 function handleFile(input) {
   const file = input.files[0];
   if (file) {
     if (file.type !== "application/pdf") {
-      alert("Erro: Por favor, selecione apenas arquivos PDF.");
+      alert("Erro: Formato inválido. Por favor, envie apenas arquivos em PDF.");
       input.value = "";
       return;
     }
-    document.getElementById('fileName').innerText = "Arquivo: " + file.name;
-    document.getElementById('uploadText').innerText = "Documento carregado!";
-    document.getElementById('btnSendPdf').style.display = 'inline-block';
+    document.getElementById('fileName').innerText = "Selecionado: " + file.name;
+    document.getElementById('uploadText').innerText = "Arquivo pronto para análise!";
+    document.getElementById('btnSendPdf').style.display = 'block';
   }
 }
 
@@ -41,37 +37,39 @@ async function sendPdf() {
   if (!fileInput.files[0]) return;
 
   const btn = document.getElementById('btnSendPdf');
-  btn.innerText = "IA Analisando & Robô em Ação...";
+  btn.innerText = "Enviando para IA...";
   btn.disabled = true;
 
   const formData = new FormData();
   formData.append('arquivo_pdf', fileInput.files[0]);
 
   try {
-    const response = await fetch(`${URL_BACKEND}/extrair-apolice`, {
+    const response = await fetch(URL_BACKEND + '/extrair-apolice', {
       method: 'POST',
       body: formData
     });
     
-    const res = await response.json();
+    const resultado = await response.json();
     
-    if (response.ok) {
-      document.getElementById('stepUpload').style.display = 'none';
-      document.getElementById('telaSucesso').style.display = 'block';
-      
-      // Exibição dos dados capturados (Layout Original)
-      document.getElementById('dadosExtraidos').style.display = 'block';
-      document.getElementById('msgSucesso').innerText = "Processamento concluído com sucesso!";
-      
-      document.getElementById('resNome').innerText = res.dados.nome || "Não encontrado";
-      document.getElementById('resCpf').innerText = res.dados.cpf || "Não encontrado";
-      document.getElementById('resPlaca').innerText = res.dados.placa || "Não encontrado";
-      document.getElementById('resStatusRobo').innerText = res.automacao.status || "Erro no Robô";
+    if(response.ok) {
+        document.getElementById('stepUpload').style.display = 'none';
+        document.getElementById('telaSucesso').style.display = 'block';
+        
+        if(resultado.dados) {
+            document.getElementById('dadosExtraidos').style.display = 'block';
+            document.getElementById('msgSucesso').innerText = "Análise da IA concluída com sucesso!";
+            document.getElementById('resNome').innerText = resultado.dados.nome || "Não encontrado";
+            document.getElementById('resCpf').innerText = resultado.dados.cpf || "Não encontrado";
+            document.getElementById('resPlaca').innerText = resultado.dados.placa || "Não encontrado";
+            document.getElementById('resEmail').innerText = resultado.dados.email || "Não encontrado";
+            document.getElementById('resPacote').innerText = resultado.dados.pacote || "Não encontrado";
+        }
+        
     } else {
-      throw new Error(res.detail || "Erro de servidor");
+        throw new Error('Falha no servidor');
     }
   } catch (error) {
-    console.error("Erro na comunicação:", error);
+    console.error("Erro:", error);
     alert("Ocorreu um erro na comunicação com o motor de IA.");
   } finally {
     btn.innerText = "Iniciar Análise por IA";
@@ -79,34 +77,16 @@ async function sendPdf() {
   }
 }
 
-// --- FLUXO MANUAL (WIZARD) ---
 function avancarPasso(p) {
-  // Validação básica do Passo 1
-  if (p === 2) {
-    const nome = document.getElementById('nome').value;
-    const cpf = document.getElementById('cpf').value;
-    if (!nome || !cpf) {
-      alert("Nome e CPF são obrigatórios para prosseguir.");
-      return;
-    }
-  }
-
   document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
   document.getElementById('step-' + p).classList.add('active');
-  
-  document.querySelectorAll('.progress-bar li').forEach((l, i) => {
-    if (i < p) l.classList.add('active');
-    else l.classList.remove('active');
-  });
+  document.querySelectorAll('.progress-bar li').forEach((l, i) => { if(i < p) l.classList.add('active'); });
 }
 
 function voltarPasso(p) {
   document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
   document.getElementById('step-' + p).classList.add('active');
-  
-  document.querySelectorAll('.progress-bar li').forEach((l, i) => {
-    if (i >= p) l.classList.remove('active');
-  });
+  document.querySelectorAll('.progress-bar li').forEach((l, i) => { if(i >= p) l.classList.remove('active'); });
 }
 
 function selecionarPacote(pac, el) {
@@ -115,48 +95,45 @@ function selecionarPacote(pac, el) {
   document.getElementById('pacoteSelecionado').value = pac;
 }
 
-// --- ENVIO DO FORMULÁRIO MANUAL ---
 async function enviarCotacaoManual() {
-  const pacote = document.getElementById('pacoteSelecionado').value;
-  if (!pacote) {
-    alert("Selecione um plano de cobertura.");
-    return;
+  if(!document.getElementById('pacoteSelecionado').value) { 
+    alert("Por favor, selecione um pacote de cobertura."); 
+    return; 
   }
-
+  
   const btn = document.getElementById('btnFinalizar');
-  btn.innerText = "Acionando Robô...";
+  btn.innerText = "Enviando para Seguradoras..."; 
   btn.disabled = true;
 
   const dados = {
     origem: "manual",
     nome: document.getElementById('nome').value,
-    cpf: document.getElementById('cpf').value.replace(/\D/g, ''),
-    placa: document.getElementById('placa').value.toUpperCase(),
+    cpf: document.getElementById('cpf').value.replace(/\D/g,''),
+    placa: document.getElementById('placa').value,
     email: document.getElementById('email').value,
-    pacote: pacote
+    pacote: document.getElementById('pacoteSelecionado').value
   };
 
   try {
-    const response = await fetch(`${URL_BACKEND}/iniciar-cotacao`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dados)
+    const response = await fetch(URL_BACKEND + '/iniciar-cotacao', { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dados) 
     });
-
-    const res = await response.json();
-
-    if (response.ok) {
-      document.getElementById('formManual').style.display = 'none';
-      document.getElementById('telaSucesso').style.display = 'block';
-      document.getElementById('dadosExtraidos').style.display = 'none';
-      document.getElementById('msgSucesso').innerText = "Seus dados manuais foram enviados ao robô com sucesso.";
+    
+    if(response.ok) {
+        document.getElementById('formManual').style.display = 'none';
+        document.getElementById('telaSucesso').style.display = 'block';
+        document.getElementById('dadosExtraidos').style.display = 'none';
+        document.getElementById('msgSucesso').innerText = "Nossa IA está processando seus dados na seguradora.";
     } else {
-      throw new Error("Falha no servidor");
+        throw new Error('Falha no servidor');
     }
+
   } catch (e) {
-    console.error(e);
-    alert("Erro ao conectar com o servidor.");
-    btn.innerText = "Enviar Pedido";
+    console.error("Erro:", e);
+    alert("Ocorreu um erro na comunicação com o motor de cotação."); 
+    btn.innerText = "Enviar Pedido"; 
     btn.disabled = false;
   }
 }
