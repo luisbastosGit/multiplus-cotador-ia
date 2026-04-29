@@ -1,4 +1,4 @@
-# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:34
+# NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:46
 import os
 import json
 import tempfile
@@ -44,9 +44,9 @@ def processar_pdf_gemini(conteudo_pdf: bytes) -> dict:
         if arquivo_gemini.state.name == "FAILED":
             raise Exception("Os servidores do Google falharam ao processar este PDF.")
 
-        # 4. Configura o modelo para extração estrita de JSON
+        # 4. Configura o modelo para extração estrita de JSON (Nomenclatura Corrigida)
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-pro",
+            model_name="gemini-1.5-pro-latest",
             generation_config={"response_mime_type": "application/json"}
         )
 
