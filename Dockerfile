@@ -1,5 +1,5 @@
-# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026 17:58
-FROM mcr.microsoft.com/playwright/python:v1.42.0-jammy
+# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026 18:07
+FROM mcr.microsoft.com/playwright/python:v1.59.0-jammy
 
 # Define a pasta raiz de trabalho inicial
 WORKDIR /app
@@ -24,5 +24,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Expõe a porta de comunicação do Render
 EXPOSE 8000
 
-# Comando que inicializa o servidor da API (agora chamando o main.py diretamente da pasta backend)
+# Comando que inicializa o servidor da API
 CMD ["python", "main.py"]
