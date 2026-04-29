@@ -1,16 +1,14 @@
-// NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:28
+// NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:20
 const URL_BACKEND = "https://multiplus-cotador-ia.onrender.com"; 
 
 function showManual() {
   document.getElementById('stepChoice').style.display = 'none';
   document.getElementById('formManual').style.display = 'block';
-  document.getElementById('telaSucesso').style.display = 'none';
 }
 
 function showUpload() {
   document.getElementById('stepChoice').style.display = 'none';
   document.getElementById('stepUpload').style.display = 'block';
-  document.getElementById('telaSucesso').style.display = 'none';
 }
 
 function resetToChoice() {
@@ -55,6 +53,8 @@ async function sendPdf() {
         document.getElementById('stepUpload').style.display = 'none';
         document.getElementById('telaSucesso').style.display = 'block';
         
+        // NOVO CÓDIGO INSERIDO AQUI - 28/04/2026 21:20
+        // Injeta os dados capturados pela IA no HTML
         if(resultado.dados) {
             document.getElementById('dadosExtraidos').style.display = 'block';
             document.getElementById('msgSucesso').innerText = "Análise da IA concluída com sucesso!";
@@ -71,7 +71,6 @@ async function sendPdf() {
   } catch (error) {
     console.error("Erro:", error);
     alert("Ocorreu um erro na comunicação com o motor de IA.");
-  } finally {
     btn.innerText = "Iniciar Análise por IA";
     btn.disabled = false;
   }
@@ -122,8 +121,10 @@ async function enviarCotacaoManual() {
     });
     
     if(response.ok) {
-        document.getElementById('formManual').style.display = 'none';
+        document.querySelectorAll('.wizard-step').forEach(s => s.style.display = 'none');
+        document.querySelector('.progress-bar').style.display = 'none';
         document.getElementById('telaSucesso').style.display = 'block';
+        // Garante que a caixa da IA não apareça no envio manual
         document.getElementById('dadosExtraidos').style.display = 'none';
         document.getElementById('msgSucesso').innerText = "Nossa IA está processando seus dados na seguradora.";
     } else {
