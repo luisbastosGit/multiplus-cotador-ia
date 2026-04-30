@@ -1,4 +1,4 @@
-# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026
+# NOVO CÓDIGO INSERIDO AQUI - 30/04/2026
 import os
 import time
 from playwright.sync_api import sync_playwright
@@ -17,7 +17,6 @@ class RoboPortoSeguro:
         try:
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
-                # Adicionamos uma resolução de ecrã padrão para evitar que elementos fiquem sobrepostos em ecrãs pequenos
                 context = browser.new_context(
                     user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
                     viewport={"width": 1366, "height": 768}
@@ -30,7 +29,8 @@ class RoboPortoSeguro:
                 time.sleep(5)
                 
                 # 2. CLIQUE NO ACESSO
-                botoes_acesso = page.locator("text=ACESSAR O CORRETOR ONLINE").locator("visible=true")
+                print("[Porto Seguro] Tentando clicar no botão de acesso...")
+                botoes_acesso = page.locator("text=ACESSAR O CORRETOR ONLINE")
                 if botoes_acesso.count() > 0:
                     botoes_acesso.first.click(force=True)
                 else:
@@ -38,26 +38,28 @@ class RoboPortoSeguro:
                 
                 # 3. LOGIN E SENHA
                 print("[Porto Seguro] Preenchendo login e senha...")
-                cpf_input = page.locator("input[name='logon'], input[placeholder*='CPF']").locator("visible=true").first
-                cpf_input.wait_for(timeout=30000)
+                # Pausa estratégica para a animação do modal da Porto Seguro terminar
+                time.sleep(3) 
+                
+                # Usando o ID exato descoberto no log!
+                cpf_input = page.locator("#logonPrincipal")
                 cpf_input.fill(self.cpf_login or "")
                 
-                senha_input = page.locator("input[type='password']").locator("visible=true").first
+                senha_input = page.locator("input[type='password']").first
                 senha_input.fill(self.senha_login or "")
                 
-                # Clique limpo e único (sem dar Enter)
-                btn_entrar = page.locator("button:has-text('ENTRAR'), .text-btn:has-text('ENTRAR'), text='ENTRAR'").locator("visible=true").first
+                # Clique limpo direto no botão
+                btn_entrar = page.locator("button:has-text('ENTRAR'), .text-btn:has-text('ENTRAR'), text='ENTRAR'").first
                 btn_entrar.click(force=True)
                 
                 # 4. TELA DA SUSEP
                 print(f"[Porto Seguro] Aguardando tela SUSEP para inserir {self.susep_padrao}...")
-                # O modificador "i" ignora se está escrito SUSEP, Susep ou susep
-                susep_input = page.locator("input[placeholder*='susep' i], input[name*='susep' i]").locator("visible=true").first
-                susep_input.wait_for(timeout=30000)
+                time.sleep(4) # Aguarda transição do login para a Susep
+                
+                susep_input = page.locator("input[placeholder*='susep' i], input[name*='susep' i]").first
                 susep_input.fill(self.susep_padrao)
                 
-                # Clica no botão Entrar do modal da SUSEP (pega o último elemento visível para garantir que é o botão do modal e não o do login de trás)
-                btn_confirmar_susep = page.locator("button:has-text('ENTRAR'), text='ENTRAR'").locator("visible=true").last
+                btn_confirmar_susep = page.locator("button:has-text('ENTRAR'), text='ENTRAR'").last
                 btn_confirmar_susep.click(force=True)
                 
                 # 5. TRANSIÇÃO PARA O SISTEMA DE COTAÇÃO
@@ -66,14 +68,14 @@ class RoboPortoSeguro:
                 
                 # 6. INJEÇÃO DOS DADOS EXTRAÍDOS
                 print(f"[Porto Seguro] Injetando CPF: {dados.cpf} e Placa: {dados.placa}")
-                cpf_segurado = page.locator("input#cpf_segurado").locator("visible=true").first
+                cpf_segurado = page.locator("input#cpf_segurado").first
                 cpf_segurado.wait_for(timeout=30000)
                 cpf_segurado.fill(dados.cpf)
                 cpf_segurado.press("Tab")
                 
                 time.sleep(4) # Aguarda retorno do webservice da Porto
                 
-                placa_veiculo = page.locator("input#placa_veiculo").locator("visible=true").first
+                placa_veiculo = page.locator("input#placa_veiculo").first
                 placa_veiculo.fill(dados.placa)
                 placa_veiculo.press("Tab")
                 
@@ -86,7 +88,6 @@ class RoboPortoSeguro:
                 return {"status": "Injeção finalizada com sucesso."}
                 
         except Exception as e:
-            # === O SISTEMA RAIO-X ENTRA EM AÇÃO AQUI ===
             try:
                 page.screenshot(path="raiox_erro_porto.png")
                 print("[Porto Seguro] FOTO DO ERRO SALVA NO SERVIDOR: raiox_erro_porto.png")
