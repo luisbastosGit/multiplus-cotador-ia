@@ -1,4 +1,4 @@
-# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026 19:20
+# NOVO CÓDIGO INSERIDO AQUI - 29/04/2026
 import os
 import time
 from playwright.sync_api import sync_playwright
@@ -17,8 +17,10 @@ class RoboPortoSeguro:
         try:
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
+                # Adicionamos uma resolução de ecrã padrão para evitar que elementos fiquem sobrepostos em ecrãs pequenos
                 context = browser.new_context(
-                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                    viewport={"width": 1366, "height": 768}
                 )
                 page = context.new_page()
                 
@@ -28,7 +30,7 @@ class RoboPortoSeguro:
                 time.sleep(5)
                 
                 # 2. CLIQUE NO ACESSO
-                botoes_acesso = page.locator("text=ACESSAR O CORRETOR ONLINE")
+                botoes_acesso = page.locator("text=ACESSAR O CORRETOR ONLINE").locator("visible=true")
                 if botoes_acesso.count() > 0:
                     botoes_acesso.first.click(force=True)
                 else:
@@ -42,25 +44,21 @@ class RoboPortoSeguro:
                 
                 senha_input = page.locator("input[type='password']").locator("visible=true").first
                 senha_input.fill(self.senha_login or "")
-                senha_input.press("Enter")
                 
-                # Clique de segurança caso o Enter não dispare
-                time.sleep(2)
-                btn_entrar = page.locator("text='ENTRAR'").locator("visible=true")
-                if btn_entrar.count() > 0:
-                    btn_entrar.first.click(force=True)
+                # Clique limpo e único (sem dar Enter)
+                btn_entrar = page.locator("button:has-text('ENTRAR'), .text-btn:has-text('ENTRAR'), text='ENTRAR'").locator("visible=true").first
+                btn_entrar.click(force=True)
                 
-                # 4. TELA DA SUSEP (Conforme evidência visual)
-                print(f"[Porto Seguro] Identificando tela SUSEP para inserir {self.susep_padrao}...")
-                susep_input = page.locator("input[placeholder*='SUSEP'], input[name*='susep']").locator("visible=true").first
+                # 4. TELA DA SUSEP
+                print(f"[Porto Seguro] Aguardando tela SUSEP para inserir {self.susep_padrao}...")
+                # O modificador "i" ignora se está escrito SUSEP, Susep ou susep
+                susep_input = page.locator("input[placeholder*='susep' i], input[name*='susep' i]").locator("visible=true").first
                 susep_input.wait_for(timeout=30000)
                 susep_input.fill(self.susep_padrao)
-                susep_input.press("Enter")
                 
-                time.sleep(2)
-                btn_confirmar_susep = page.locator("text='ENTRAR'").locator("visible=true")
-                if btn_confirmar_susep.count() > 0:
-                    btn_confirmar_susep.first.click(force=True)
+                # Clica no botão Entrar do modal da SUSEP (pega o último elemento visível para garantir que é o botão do modal e não o do login de trás)
+                btn_confirmar_susep = page.locator("button:has-text('ENTRAR'), text='ENTRAR'").locator("visible=true").last
+                btn_confirmar_susep.click(force=True)
                 
                 # 5. TRANSIÇÃO PARA O SISTEMA DE COTAÇÃO
                 print("[Porto Seguro] Navegando para a área de cálculo...")
@@ -79,7 +77,6 @@ class RoboPortoSeguro:
                 placa_veiculo.fill(dados.placa)
                 placa_veiculo.press("Tab")
                 
-                # Sucesso
                 try:
                     page.screenshot(path="evidencia_final_porto.png")
                 except:
@@ -89,9 +86,16 @@ class RoboPortoSeguro:
                 return {"status": "Injeção finalizada com sucesso."}
                 
         except Exception as e:
+            # === O SISTEMA RAIO-X ENTRA EM AÇÃO AQUI ===
+            try:
+                page.screenshot(path="raiox_erro_porto.png")
+                print("[Porto Seguro] FOTO DO ERRO SALVA NO SERVIDOR: raiox_erro_porto.png")
+            except:
+                pass
+                
             msg_erro = str(e)
             print(f"[Porto Seguro] Falha no fluxo: {msg_erro}")
-            return {"status": f"Erro na automação: {msg_erro[:50]}"}
+            return {"status": f"O robô travou. Verifique o log para detalhes."}
 
 def cotar(dados):
     return RoboPortoSeguro().executar_cotacao(dados)
