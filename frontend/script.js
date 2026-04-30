@@ -1,5 +1,6 @@
-// NOVO CÓDIGO INSERIDO AQUI - 30/04/2026
-const URL_BACKEND = "https://motor-multiplus-docker.onrender.com/"; 
+// NOVO CÓDIGO INSERIDO AQUI - 30/04/2026 14:30
+// A URL agora aponta para o motor-multiplus-docker, que é o seu backend real.
+const URL_BACKEND = "https://motor-multiplus-docker.onrender.com"; 
 
 function showManual() {
   document.getElementById('stepChoice').style.display = 'none';
@@ -46,7 +47,8 @@ async function sendPdf() {
   formData.append('arquivo_pdf', fileInput.files[0]);
 
   try {
-    const response = await fetch(`${URL_BACKEND}/extrair-apolice`, {
+    // Bate no endpoint /cotar-ia que agora existe no backend
+    const response = await fetch(`${URL_BACKEND}/cotar-ia`, {
       method: 'POST',
       body: formData
     });
@@ -64,7 +66,7 @@ async function sendPdf() {
       document.getElementById('resStatusRobo').innerText = "Delegado à Extensão Local";
       document.getElementById('msgSucesso').innerText = "Processamento concluído com sucesso!";
 
-      // O GRANDE TRUQUE: Dispara um evento global que a Extensão do Chrome vai escutar
+      // DISPARA SINAL PARA A EXTENSÃO
       const eventoExtensao = new CustomEvent("AcionarRoboMultiplus", { detail: res.dados });
       window.dispatchEvent(eventoExtensao);
 
@@ -73,7 +75,7 @@ async function sendPdf() {
     }
   } catch (error) {
     console.error("Erro na comunicação:", error);
-    alert("Ocorreu um erro na comunicação com o motor de IA.");
+    alert("Ocorreu um erro na comunicação com o motor de IA. Verifique se o backend está rodando no Render.");
   } finally {
     btn.innerText = "Iniciar Análise por IA";
     btn.disabled = false;
@@ -132,7 +134,8 @@ async function enviarCotacaoManual() {
   };
 
   try {
-    const response = await fetch(`${URL_BACKEND}/iniciar-cotacao`, {
+    // Bate no endpoint /enviar-cotacao que agora existe no backend
+    const response = await fetch(`${URL_BACKEND}/enviar-cotacao`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(dados)
@@ -144,7 +147,7 @@ async function enviarCotacaoManual() {
       document.getElementById('dadosExtraidos').style.display = 'none';
       document.getElementById('msgSucesso').innerText = "Dados enviados para a Extensão!";
       
-      // Dispara o evento para a extensão também no fluxo manual
+      // DISPARA SINAL PARA A EXTENSÃO MANUALMENTE
       const eventoExtensao = new CustomEvent("AcionarRoboMultiplus", { detail: dados });
       window.dispatchEvent(eventoExtensao);
     }
