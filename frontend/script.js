@@ -1,5 +1,5 @@
 // NOVO CÓDIGO INSERIDO AQUI - 30/04/2026
-const URL_BACKEND = "https://SEU-LINK-DO-RENDER-AQUI.onrender.com"; 
+const URL_BACKEND = "https://multiplus-interface.onrender.com/"; 
 
 function showManual() {
   document.getElementById('stepChoice').style.display = 'none';
